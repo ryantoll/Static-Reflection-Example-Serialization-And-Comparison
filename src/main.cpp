@@ -60,7 +60,7 @@ template <class T> std::string serializeFromMetadata(const T& object) {
         };
     constexpr auto list = T::DefineMemberMapping(); // Create this separately to elide runtime call
     std::apply(ConcatenateElement, list);
-    // std::apply(ConcatenateElement, T::DefineMemberMapping()); <= This form would make a runtime call
+    // std::apply(ConcatenateElement, T::DefineMemberMapping()); <= This form would make a runtime call on GCC 14
     result.push_back('}');
     return result;
 }
