@@ -23,7 +23,8 @@ template <class T> struct LEXICOGRAPHICAL_EQUALITY {
         auto CompareProperty = [&lhs, &rhs](auto &&...metadata) -> bool {
             return ((lhs.*metadata.member == rhs.*metadata.member) && ...);
             };
-        return std::apply(CompareProperty, T::DefineMemberMapping());
+        constexpr auto list = T::DefineMemberMapping();
+        return std::apply(CompareProperty, list);
     }
 
     // Build lexigraphical inequality operator from serialization metadata
