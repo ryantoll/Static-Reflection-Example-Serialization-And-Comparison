@@ -65,3 +65,35 @@ TEST_CASE("Serialization only includes fields declared in mapping") {
     REQUIRE_FALSE(myVar.serialize() == fieldOneMismatch.serialize()); // Field "one" is mismatched
     REQUIRE_FALSE(myVar.serialize() == fieldTwoMismatch.serialize()); // Field "two" is mismatched
 }
+
+// This struct has a trivial mapping
+struct BAZ : public SERIALIZATION<BAZ>, LEXICOGRAPHICAL_EQUALITY<BAZ> {
+    char c{' '};
+
+    constexpr BAZ() = default;
+
+    constexpr explicit BAZ(char c_) : c{ c_ } {}
+
+    static constexpr auto DefineMemberMapping() {
+        return std::make_tuple(); // Empty
+    }
+};
+
+TEST_CASE("Objects with empty mapping always compare equal") {
+    constexpr auto myVar = BAZ{ };
+    constexpr auto exactMatch = BAZ{ };
+    constexpr auto irrelevantChange = BAZ{ '?' };
+
+    STATIC_REQUIRE(myVar == exactMatch);
+    STATIC_REQUIRE(myVar == irrelevantChange);
+}
+
+TEST_CASE("Objects with empty mapping always serialize as empty") {
+    constexpr auto myVar = BAZ{ };
+    constexpr auto exactMatch = BAZ{ };
+    constexpr auto irrelevantChange = BAZ{ '?' };
+
+    REQUIRE(myVar.serialize() == "{\n}");
+    REQUIRE(myVar.serialize() == exactMatch.serialize());
+    REQUIRE(myVar.serialize() == irrelevantChange.serialize());
+}
