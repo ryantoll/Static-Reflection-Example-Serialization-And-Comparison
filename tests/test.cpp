@@ -21,13 +21,17 @@ TEST_CASE("Serialization (in)equality") {
     constexpr auto fieldTwoMismatch = FOO{ 1, "cba", '-' };
     constexpr auto fieldThreeMismatch = FOO{ 1, "abc", '*' };
 
-    constexpr auto serializationOutput = std::string_view{ "{\n\tone : 1,\n\ttwo : abc,\n\tthree : -,\n}" };
-
-    REQUIRE(myVar.serialize() == serializationOutput.data());
     REQUIRE(myVar.serialize() == exactMatch.serialize());
     REQUIRE_FALSE(myVar.serialize() == fieldOneMismatch.serialize());
     REQUIRE_FALSE(myVar.serialize() == fieldTwoMismatch.serialize());
     REQUIRE_FALSE(myVar.serialize() == fieldThreeMismatch.serialize());
+}
+
+TEST_CASE("Expected Serialization Output Check") {
+    constexpr auto myVar = FOO{ 1, "abc", '-' };
+    constexpr auto serializationOutput = std::string_view{ "{\n\tone : 1,\n\ttwo : abc,\n\tthree : -,\n}" };
+
+    REQUIRE(myVar.serialize() == serializationOutput.data());
 }
 
 // This struct has one field deliberately unmapped
