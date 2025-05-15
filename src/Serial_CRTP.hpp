@@ -11,6 +11,8 @@ template<typename M, typename T>
 struct BINDING {
     M T::* member;
     std::string_view name;
+
+    constexpr BINDING(M T::* member_, std::string_view name_) : member{ member_ }, name{ name_ } {}
 };
 
 template<typename M, typename T>
@@ -62,9 +64,8 @@ template <class T> std::string serializeFromMetadata(const T& object) {
             result.append(",\n")),
             ...);
         };
-    constexpr auto list = T::DefineMemberMapping(); // Create this separately to elide runtime call
+    static constexpr auto list = T::DefineMemberMapping(); // Create this separately to elide runtime call
     std::apply(ConcatenateElement, list);
-    // std::apply(ConcatenateElement, T::DefineMemberMapping()); <= This form would make a runtime call on GCC 14
     result.push_back('}');
     return result;
 }

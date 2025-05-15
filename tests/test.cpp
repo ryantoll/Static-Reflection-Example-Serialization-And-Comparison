@@ -2,11 +2,11 @@
 #include <catch2/catch_test_macros.hpp>
 
 TEST_CASE("Constexpr (in)equality") {
-    constexpr auto myVar = FOO{ 1, "abc", '-' };
-    constexpr auto exactMatch = FOO{ 1, "abc", '-' };
-    constexpr auto fieldOneMismatch = FOO{ 2, "abc", '-' };
-    constexpr auto fieldTwoMismatch = FOO{ 1, "cba", '-' };
-    constexpr auto fieldThreeMismatch = FOO{ 1, "abc", '*' };
+    static constexpr auto myVar = FOO{ 1, "abc", '-' };
+    static constexpr auto exactMatch = FOO{ 1, "abc", '-' };
+    static constexpr auto fieldOneMismatch = FOO{ 2, "abc", '-' };
+    static constexpr auto fieldTwoMismatch = FOO{ 1, "cba", '-' };
+    static constexpr auto fieldThreeMismatch = FOO{ 1, "abc", '*' };
 
     STATIC_REQUIRE(myVar == exactMatch);
     STATIC_REQUIRE(myVar != fieldOneMismatch);
@@ -15,11 +15,11 @@ TEST_CASE("Constexpr (in)equality") {
 }
 
 TEST_CASE("Serialization (in)equality") {
-    constexpr auto myVar = FOO{ 1, "abc", '-' };
-    constexpr auto exactMatch = FOO{ 1, "abc", '-' };
-    constexpr auto fieldOneMismatch = FOO{ 2, "abc", '-' };
-    constexpr auto fieldTwoMismatch = FOO{ 1, "cba", '-' };
-    constexpr auto fieldThreeMismatch = FOO{ 1, "abc", '*' };
+    static constexpr auto myVar = FOO{ 1, "abc", '-' };
+    static constexpr auto exactMatch = FOO{ 1, "abc", '-' };
+    static constexpr auto fieldOneMismatch = FOO{ 2, "abc", '-' };
+    static constexpr auto fieldTwoMismatch = FOO{ 1, "cba", '-' };
+    static constexpr auto fieldThreeMismatch = FOO{ 1, "abc", '*' };
 
     REQUIRE(myVar.serialize() == exactMatch.serialize());
     REQUIRE_FALSE(myVar.serialize() == fieldOneMismatch.serialize());
@@ -28,8 +28,8 @@ TEST_CASE("Serialization (in)equality") {
 }
 
 TEST_CASE("Expected Serialization Output Check") {
-    constexpr auto myVar = FOO{ 1, "abc", '-' };
-    constexpr auto serializationOutput = std::string_view{ "{\n\tone : 1,\n\ttwo : abc,\n\tthree : -,\n}" };
+    static constexpr auto myVar = FOO{ 1, "abc", '-' };
+    static constexpr auto serializationOutput = std::string_view{ "{\n\tone : 1,\n\ttwo : abc,\n\tthree : -,\n}" };
 
     REQUIRE(myVar.serialize() == serializationOutput.data());
 }
@@ -48,11 +48,11 @@ struct BAR : public SERIALIZATION<BAR>, LEXICOGRAPHICAL_EQUALITY<BAR> {
 };
 
 TEST_CASE("Equality only checks fields declared in mapping") {
-    constexpr auto myVar = BAR{ 1, "abc", "Extra notes" };
-    constexpr auto exactMatch = BAR{ 1, "abc", "Extra notes" };
-    constexpr auto ignoredFieldMismatch = BAR{ 1, "abc", "Extra notes do not participate in equality check." };
-    constexpr auto fieldOneMismatch = BAR{ 3, "abc", "N/A" };
-    constexpr auto fieldTwoMismatch = BAR{ 1, "4", "N/A" };
+    static constexpr auto myVar = BAR{ 1, "abc", "Extra notes" };
+    static constexpr auto exactMatch = BAR{ 1, "abc", "Extra notes" };
+    static constexpr auto ignoredFieldMismatch = BAR{ 1, "abc", "Extra notes do not participate in equality check." };
+    static constexpr auto fieldOneMismatch = BAR{ 3, "abc", "N/A" };
+    static constexpr auto fieldTwoMismatch = BAR{ 1, "4", "N/A" };
 
     STATIC_REQUIRE(myVar == exactMatch); // Exact match
     STATIC_REQUIRE(myVar == ignoredFieldMismatch); // Field "ignoreMe" is mismatched, but is not mapped
@@ -61,11 +61,11 @@ TEST_CASE("Equality only checks fields declared in mapping") {
 }
 
 TEST_CASE("Serialization only includes fields declared in mapping") {
-    constexpr auto myVar = BAR{ 1, "abc", "Extra notes" };
-    constexpr auto exactMatch = BAR{ 1, "abc", "Extra notes" };
-    constexpr auto ignoredFieldMismatch = BAR{ 1, "abc", "Extra notes do not participate in equality check." };
-    constexpr auto fieldOneMismatch = BAR{ 3, "abc", "N/A" };
-    constexpr auto fieldTwoMismatch = BAR{ 1, "4", "N/A" };
+    static constexpr auto myVar = BAR{ 1, "abc", "Extra notes" };
+    static constexpr auto exactMatch = BAR{ 1, "abc", "Extra notes" };
+    static constexpr auto ignoredFieldMismatch = BAR{ 1, "abc", "Extra notes do not participate in equality check." };
+    static constexpr auto fieldOneMismatch = BAR{ 3, "abc", "N/A" };
+    static constexpr auto fieldTwoMismatch = BAR{ 1, "4", "N/A" };
 
     REQUIRE(myVar.serialize() == exactMatch.serialize()); // Exact match
     REQUIRE(myVar.serialize() == ignoredFieldMismatch.serialize()); // Field "ignoreMe" is mismatched, but is not mapped
@@ -87,18 +87,18 @@ struct BAZ : public SERIALIZATION<BAZ>, LEXICOGRAPHICAL_EQUALITY<BAZ> {
 };
 
 TEST_CASE("Objects with empty mapping always compare equal") {
-    constexpr auto myVar = BAZ{ };
-    constexpr auto exactMatch = BAZ{ };
-    constexpr auto irrelevantChange = BAZ{ '?' };
+    static constexpr auto myVar = BAZ{ };
+    static constexpr auto exactMatch = BAZ{ };
+    static constexpr auto irrelevantChange = BAZ{ '?' };
 
     STATIC_REQUIRE(myVar == exactMatch);
     STATIC_REQUIRE(myVar == irrelevantChange);
 }
 
 TEST_CASE("Objects with empty mapping always serialize as empty") {
-    constexpr auto myVar = BAZ{ };
-    constexpr auto exactMatch = BAZ{ };
-    constexpr auto irrelevantChange = BAZ{ '?' };
+    static constexpr auto myVar = BAZ{ };
+    static constexpr auto exactMatch = BAZ{ };
+    static constexpr auto irrelevantChange = BAZ{ '?' };
 
     REQUIRE(myVar.serialize() == "{\n}");
     REQUIRE(myVar.serialize() == exactMatch.serialize());
