@@ -8,6 +8,8 @@ struct FOO : public SERIALIZATION<FOO>, LEXICOGRAPHICAL_EQUALITY<FOO> {
     std::string_view two;
     char three;
 
+    FOO() = default;
+
     constexpr FOO(int one_, std::string_view two_, char three_) : one{ one_ }, two{ two_ }, three{ three_ } {}
 
     static constexpr auto DefineMemberMapping() {

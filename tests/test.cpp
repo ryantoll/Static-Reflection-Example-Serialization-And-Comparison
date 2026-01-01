@@ -27,11 +27,15 @@ TEST_CASE("Serialization (in)equality") {
     REQUIRE_FALSE(myVar.serialize() == fieldThreeMismatch.serialize());
 }
 
-TEST_CASE("Expected Serialization Output Check") {
+TEST_CASE("Expected Serialization/Deserialization Output Check") {
     static constexpr auto myVar = FOO{ 1, "abc", '-' };
     static constexpr auto serializationOutput = std::string_view{ "{\n\tone : 1,\n\ttwo : abc,\n\tthree : -\n}" };
 
-    REQUIRE(myVar.serialize() == serializationOutput.data());
+    CHECK(myVar.serialize() == serializationOutput.data());
+
+    // Currently assumes names are in same order
+    static auto deserializationResult = FOO::deserialize(serializationOutput);
+    CHECK(myVar == deserializationResult);
 }
 
 // This struct has one field deliberately unmapped
