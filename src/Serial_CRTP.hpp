@@ -66,7 +66,11 @@ template <class T> std::string serializeFromMetadata(const T& object) {
         };
     static constexpr auto list = T::DefineMemberMapping(); // Create this separately to elide runtime call
     std::apply(ConcatenateElement, list);
+
+    auto maybeComma = result.end() - 2;
+    if (maybeComma > result.begin()) { result.erase(maybeComma); }
     result.push_back('}');
+
     return result;
 }
 

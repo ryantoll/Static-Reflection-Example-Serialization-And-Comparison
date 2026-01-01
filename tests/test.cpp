@@ -29,7 +29,7 @@ TEST_CASE("Serialization (in)equality") {
 
 TEST_CASE("Expected Serialization Output Check") {
     static constexpr auto myVar = FOO{ 1, "abc", '-' };
-    static constexpr auto serializationOutput = std::string_view{ "{\n\tone : 1,\n\ttwo : abc,\n\tthree : -,\n}" };
+    static constexpr auto serializationOutput = std::string_view{ "{\n\tone : 1,\n\ttwo : abc,\n\tthree : -\n}" };
 
     REQUIRE(myVar.serialize() == serializationOutput.data());
 }
