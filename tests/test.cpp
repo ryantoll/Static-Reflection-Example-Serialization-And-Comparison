@@ -33,9 +33,16 @@ TEST_CASE("Expected Serialization/Deserialization Output Check") {
 
     CHECK(myVar.serialize() == serializationOutput.data());
 
-    // Currently assumes names are in same order
     static auto deserializationResult = FOO::deserialize(serializationOutput);
     CHECK(myVar == deserializationResult);
+
+    static constexpr auto reorderedInput = std::string_view{ "{\n\ttwo : abc,\n\tthree : -,\n\tone : 1\n}" };
+    static auto reorderedResult = FOO::deserialize(reorderedInput);
+    CHECK(reorderedResult == deserializationResult);
+
+    static constexpr auto lessWhiteSpaceinput = std::string_view{ "{two : abc,\nthree : -,\tone : 1}" };
+    static auto lessWhiteSpaceResult = FOO::deserialize(lessWhiteSpaceinput);
+    CHECK(lessWhiteSpaceResult == deserializationResult);
 }
 
 // This struct has one field deliberately unmapped

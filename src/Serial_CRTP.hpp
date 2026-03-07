@@ -90,7 +90,9 @@ int FromStringView(std::string_view sv) {
     auto result = int{};
     auto retCode = std::from_chars(sv.data(), sv.data() + sv.size(), result);
     if (retCode.ec == std::errc{}) { return result; }
-    else { throw std::runtime_error{ "Error parsing int." }; }
+    else { 
+        throw std::runtime_error{ "Error parsing int." };
+    }
 }
 
 template <>
@@ -100,29 +102,47 @@ constexpr char FromStringView(std::string_view sv) {
 
 template <class T> constexpr T DeserializeFromMetadata(std::string_view input) {
     auto result = T{ };
-    static constexpr auto list = T::DefineMemberMapping(); // Create this separately to elide runtime call
-    auto lines = std::array<std::string_view, std::tuple_size_v<decltype(list)>>{ };
+    constexpr auto list = T::DefineMemberMapping(); // Create this separately to elide runtime call
+    auto lines = std::array<std::pair<std::string_view, std::string_view>, std::tuple_size_v<decltype(list)>>{ };
+
+    // Fill array with key names for lookup
+    auto index = 0;
+    auto InsertKey = [&result, &lines, &index](auto &&...element) {
+        ((lines[index++].first = element.name), ...);
+    };
+    std::apply(InsertKey, list);
 
     input.remove_prefix(1); // '{'
     input.remove_suffix(1); // '}'
 
-    // Get text of each value
-    auto beginPos = size_t{ 0 };
-    for (auto& subView : lines) {
-        auto colonPos = input.find(':', beginPos);
-        auto endPos = input.find('\n', colonPos);
+    // Parse key-value pairs, match values to keys assigned above, discard any unrecognized keys
+    auto keyBeginPos = size_t{ 0 };
+    while (keyBeginPos < input.size()) {
+        // Identify important positional values to split line into key & value sub-views
+        while (keyBeginPos < input.size() && (input[keyBeginPos] == '\n' || input[keyBeginPos] == '\t')) { ++keyBeginPos; }
+        auto colonPos = input.find(':', keyBeginPos);
+        auto valueBeginPos = colonPos + 2; // Advance past ':' and ' '
+        auto endPos = input.find(',', colonPos);
+        endPos = std::min(endPos, input.size()); // std::string_view::npos will always exceed size
 
-        beginPos = endPos + 1; // Set next iteration start point
-        if (endPos < input.size() && input[endPos - 1] == ',') { --endPos; }
-        auto startValuePos = colonPos + 2; // Advance past ':' and ' '
+        // Identify key and value
+        auto key = input.substr(keyBeginPos, colonPos - keyBeginPos - 1);
+        auto value = input.substr(valueBeginPos, endPos - valueBeginPos);
 
-        subView = input.substr(startValuePos, endPos - startValuePos);
+        // Assign value alongside associated key if it exists; skip unrecognized keys
+        auto matchKey = [key](const std::pair<std::string_view, std::string_view>& keyValuePair) {
+            return keyValuePair.first == key;
+        };
+        auto location = std::find_if(lines.begin(), lines.end(), matchKey);
+        if (location != lines.end()) { location->second = value; }
+
+        keyBeginPos = endPos + 1; // Set next iteration start point
     }
 
     // Iterate over member variables and assign values assuming each name is present and in same order
     auto counter = 0;
     auto DeserializeElement = [&result, &lines, &counter](auto &&...element) {
-        ((result.*(element.member) = FromStringView<std::decay_t<decltype(result.*(element.member))>>(lines[counter++])), ...);
+        ((result.*(element.member) = FromStringView<std::decay_t<decltype(result.*(element.member))>>(lines[counter++].second)), ...);
     };
     std::apply(DeserializeElement, list);
 
