@@ -88,6 +88,7 @@ constexpr std::string_view FromStringView(std::string_view sv) {
 template <>
 int FromStringView(std::string_view sv) {
     auto result = int{};
+    /// @todo Make constexpr version of std::from_chars, even if limited
     auto retCode = std::from_chars(sv.data(), sv.data() + sv.size(), result);
     if (retCode.ec == std::errc{}) { return result; }
     else { 
@@ -138,7 +139,8 @@ template <class T> constexpr T DeserializeFromMetadata(std::string_view input) {
         auto matchKey = [key](const std::pair<std::string_view, std::string_view>& keyValuePair) {
             return keyValuePair.first == key;
         };
-        auto location = std::find_if(lines.begin(), lines.end(), matchKey);
+        auto location = lines.begin();
+        while (location != lines.end() && !matchKey(*location)) { ++location; } // std::find_if() is not constexpr until C++20
         if (location != lines.end()) { location->second = value; }
 
         keyBeginPos = endPos + 1; // Set next iteration start point

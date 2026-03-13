@@ -27,19 +27,22 @@ TEST_CASE("Serialization (in)equality") {
     REQUIRE_FALSE(myVar.serialize() == fieldThreeMismatch.serialize());
 }
 
-TEST_CASE("Expected Serialization/Deserialization Output Check") {
+TEST_CASE("Expected Serialization/Deserialization Output Check : FOO") {
     static constexpr auto myVar = FOO{ 1, "abc", '-' };
     static constexpr auto serializationOutput = std::string_view{ "{\n\tone : 1,\n\ttwo : abc,\n\tthree : -\n}" };
 
     CHECK(myVar.serialize() == serializationOutput.data());
 
+    // Verify round-trip
     static auto deserializationResult = FOO::deserialize(serializationOutput);
     CHECK(myVar == deserializationResult);
 
+    // Reorder elements
     static constexpr auto reorderedInput = std::string_view{ "{\n\ttwo : abc,\n\tthree : -,\n\tone : 1\n}" };
     static auto reorderedResult = FOO::deserialize(reorderedInput);
     CHECK(reorderedResult == deserializationResult);
 
+    // Change whitespace
     static constexpr auto lessWhiteSpaceinput = std::string_view{ "{two : abc,\nthree : -,\tone : 1}" };
     static auto lessWhiteSpaceResult = FOO::deserialize(lessWhiteSpaceinput);
     CHECK(lessWhiteSpaceResult == deserializationResult);
@@ -86,15 +89,19 @@ TEST_CASE("Serialization only includes fields declared in mapping") {
     REQUIRE_FALSE(myVar.serialize() == fieldTwoMismatch.serialize()); // Field "two" is mismatched
 }
 
-TEST_CASE("Constexpr Expected Serialization/Deserialization Output Check") {
+TEST_CASE("Constexpr Expected Serialization/Deserialization Output Check: BAR") {
     static constexpr auto myVar = BAR{ 1, "abc", "-" };
     static constexpr auto serializationOutput = std::string_view{ "{\n\tone : 1,\n\ttwo : abc\n}" };;
 
     CHECK(myVar.serialize() == serializationOutput.data());
 
-    /// @todo Make constexpr -- need to replace std::find_if, which is not yet constexpr
+    // Verify round-trip
     static auto deserializationResult = BAR::deserialize(serializationOutput);
     CHECK(myVar == deserializationResult);
+
+    /// @todo Make constexpr -- need to replace std::from_chars, which is not yet constexpr
+    //static constexpr auto deserializationResultConstexpr = BAR::deserialize(serializationOutput);
+    //STATIC_CHECK(myVar == deserializationResultConstexpr);
 }
 
 // This struct has a trivial mapping
