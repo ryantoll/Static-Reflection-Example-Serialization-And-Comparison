@@ -21,6 +21,13 @@ One could investigate further refinement by starting with Boost MP11.
 https://www.boost.org/doc/libs/1_87_0/libs/mp11/doc/html/simple_cxx11_metaprogramming.html
 https://www.youtube.com/watch?v=yriNqhv-oM0
 
+Additional work is envisioned to expand this further.
+Deserialization has been added and progressively refined.
+This was beyond the original scope as the original production system leveraged a JSON library to do a lot of the heavy lifting.
+I am also trying to do as much as I can in a constexpr context.
+Some items may be possible to make constexpr in C++17 with additional effort of manual implementation.
+The original also had support for containers, optionals, and serializable objects.
+I may add support for these as well, though there's a tension there between that goal and the constexpr capability goal.
 
 Not demonstrated here is the issue of inheritance.
 Mixing in member functions creates an ambiguity with the serialization operations.
