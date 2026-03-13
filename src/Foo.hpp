@@ -4,9 +4,9 @@
 #include "Serial_CRTP.hpp"
 
 struct FOO : public SERIALIZATION<FOO>, LEXICOGRAPHICAL_EQUALITY<FOO> {
-    int one;
+    int one{ 0 };
     std::string_view two;
-    char three;
+    char three{ '\0' };
 
     FOO() = default;
 

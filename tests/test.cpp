@@ -47,9 +47,11 @@ TEST_CASE("Expected Serialization/Deserialization Output Check") {
 
 // This struct has one field deliberately unmapped
 struct BAR : public SERIALIZATION<BAR>, LEXICOGRAPHICAL_EQUALITY<BAR> {
-    int one;
+    int one{ 0 };
     std::string_view two;
     std::string_view ignoreMe;
+
+    constexpr BAR() = default;
 
     constexpr BAR(int one_, std::string_view two_, std::string_view ignoreMe_) : one{ one_ }, two{ two_ }, ignoreMe{ ignoreMe_ } {}
 
@@ -82,6 +84,17 @@ TEST_CASE("Serialization only includes fields declared in mapping") {
     REQUIRE(myVar.serialize() == ignoredFieldMismatch.serialize()); // Field "ignoreMe" is mismatched, but is not mapped
     REQUIRE_FALSE(myVar.serialize() == fieldOneMismatch.serialize()); // Field "one" is mismatched
     REQUIRE_FALSE(myVar.serialize() == fieldTwoMismatch.serialize()); // Field "two" is mismatched
+}
+
+TEST_CASE("Constexpr Expected Serialization/Deserialization Output Check") {
+    static constexpr auto myVar = BAR{ 1, "abc", "-" };
+    static constexpr auto serializationOutput = std::string_view{ "{\n\tone : 1,\n\ttwo : abc\n}" };;
+
+    CHECK(myVar.serialize() == serializationOutput.data());
+
+    /// @todo Make constexpr -- need to replace std::find_if, which is not yet constexpr
+    static auto deserializationResult = BAR::deserialize(serializationOutput);
+    CHECK(myVar == deserializationResult);
 }
 
 // This struct has a trivial mapping

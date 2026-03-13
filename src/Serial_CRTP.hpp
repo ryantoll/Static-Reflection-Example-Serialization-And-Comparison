@@ -100,6 +100,10 @@ constexpr char FromStringView(std::string_view sv) {
     return sv.at(0);
 }
 
+constexpr bool IsWhitespace(char c) {
+    return c == '\n' || c == '\t';
+}
+
 template <class T> constexpr T DeserializeFromMetadata(std::string_view input) {
     auto result = T{ };
     constexpr auto list = T::DefineMemberMapping(); // Create this separately to elide runtime call
@@ -119,7 +123,7 @@ template <class T> constexpr T DeserializeFromMetadata(std::string_view input) {
     auto keyBeginPos = size_t{ 0 };
     while (keyBeginPos < input.size()) {
         // Identify important positional values to split line into key & value sub-views
-        while (keyBeginPos < input.size() && (input[keyBeginPos] == '\n' || input[keyBeginPos] == '\t')) { ++keyBeginPos; }
+        while (keyBeginPos < input.size() && IsWhitespace(input[keyBeginPos])) { ++keyBeginPos; } // Trim preceeding whitespace
         auto colonPos = input.find(':', keyBeginPos);
         auto valueBeginPos = colonPos + 2; // Advance past ':' and ' '
         auto endPos = input.find(',', colonPos);
@@ -128,6 +132,7 @@ template <class T> constexpr T DeserializeFromMetadata(std::string_view input) {
         // Identify key and value
         auto key = input.substr(keyBeginPos, colonPos - keyBeginPos - 1);
         auto value = input.substr(valueBeginPos, endPos - valueBeginPos);
+        while (!value.empty() && IsWhitespace(value.back())) { value.remove_suffix(1); } // Trim trailing whitespace
 
         // Assign value alongside associated key if it exists; skip unrecognized keys
         auto matchKey = [key](const std::pair<std::string_view, std::string_view>& keyValuePair) {
