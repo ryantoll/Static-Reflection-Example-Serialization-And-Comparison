@@ -90,8 +90,8 @@ TEST_CASE("Serialization only includes fields declared in mapping") {
 }
 
 TEST_CASE("Constexpr Expected Serialization/Deserialization Output Check: BAR") {
-    static constexpr auto myVar = BAR{ 1, "abc", "-" };
-    static constexpr auto serializationOutput = std::string_view{ "{\n\tone : 1,\n\ttwo : abc\n}" };;
+    static constexpr auto myVar = BAR{ -42, "abc", "-" };
+    static constexpr auto serializationOutput = std::string_view{ "{\n\tone : -42,\n\ttwo : abc\n}" };;
 
     CHECK(myVar.serialize() == serializationOutput.data());
 
@@ -99,9 +99,9 @@ TEST_CASE("Constexpr Expected Serialization/Deserialization Output Check: BAR") 
     static auto deserializationResult = BAR::deserialize(serializationOutput);
     CHECK(myVar == deserializationResult);
 
-    /// @todo Make constexpr -- need to replace std::from_chars, which is not yet constexpr
-    //static constexpr auto deserializationResultConstexpr = BAR::deserialize(serializationOutput);
-    //STATIC_CHECK(myVar == deserializationResultConstexpr);
+    // Demonstrate constexpr capability
+    static constexpr auto deserializationResultConstexpr = BAR::deserialize(serializationOutput);
+    STATIC_CHECK(myVar == deserializationResultConstexpr);
 }
 
 // This struct has a trivial mapping

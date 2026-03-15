@@ -7,6 +7,7 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include "Utilities_Limited_Constexpr.hpp"
 
 template<typename M, typename T>
 struct BINDING {
@@ -86,14 +87,18 @@ constexpr std::string_view FromStringView(std::string_view sv) {
 }
 
 template <>
-int FromStringView(std::string_view sv) {
-    auto result = int{};
+constexpr int FromStringView(std::string_view sv) {
+    auto tentativeValue = limited_constexpr::FromChars<int>(sv.data(), sv.data() + sv.size());
+    if (!tentativeValue.has_value()) { throw std::runtime_error{ "Error parsing int." }; }
+    return tentativeValue.value();
+
     /// @todo Make constexpr version of std::from_chars, even if limited
-    auto retCode = std::from_chars(sv.data(), sv.data() + sv.size(), result);
-    if (retCode.ec == std::errc{}) { return result; }
-    else { 
-        throw std::runtime_error{ "Error parsing int." };
-    }
+    //auto result = int{};
+    //auto retCode = std::from_chars(sv.data(), sv.data() + sv.size(), result);
+    //if (retCode.ec == std::errc{}) { return result; }
+    //else { 
+    //    throw std::runtime_error{ "Error parsing int." };
+    //}
 }
 
 template <>
