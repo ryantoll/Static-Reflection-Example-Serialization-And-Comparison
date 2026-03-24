@@ -17,4 +17,6 @@ struct FOO : public SERIALIZATION<FOO>, LEXICOGRAPHICAL_EQUALITY<FOO> {
     }
 };
 
+static_assert(isSerializable<FOO>);
+
 #endif // !FOO_HPP

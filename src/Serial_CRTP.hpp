@@ -9,6 +9,10 @@
 #include <tuple>
 #include "Utilities_Limited_Constexpr.hpp"
 
+template <class T>
+inline constexpr bool isSerializable = std::is_invocable_r_v<std::string, decltype(&T::serialize), const T&>
+&& std::is_invocable_r_v<T, decltype(T::deserialize), std::string_view>;
+
 template<typename M, typename T>
 struct BINDING {
     M T::* member;
