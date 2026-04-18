@@ -50,16 +50,16 @@ TEST_CASE("Expected Serialization/Deserialization Output Check : FOO") {
 
 // This struct has one field deliberately unmapped
 struct BAR : public SERIALIZATION<BAR>, LEXICOGRAPHICAL_EQUALITY<BAR> {
-    int one{ 0 };
-    std::string_view two;
-    std::string_view ignoreMe;
+    int one_{ 0 };
+    std::string_view two_;
+    std::string_view ignoreMe_;
 
     constexpr BAR() = default;
 
-    constexpr BAR(int one_, std::string_view two_, std::string_view ignoreMe_) : one{ one_ }, two{ two_ }, ignoreMe{ ignoreMe_ } {}
+    constexpr BAR(int one, std::string_view two, std::string_view ignoreMe) : one_{ one }, two_{ two }, ignoreMe_{ ignoreMe } {}
 
     static constexpr auto DefineMemberMapping() {
-        return std::make_tuple(MakeBinding(&BAR::one, "one"), MakeBinding(&BAR::two, "two"));
+        return std::make_tuple(MakeBinding(&BAR::one_, "one"), MakeBinding(&BAR::two_, "two"));
     }
 };
 
@@ -106,11 +106,11 @@ TEST_CASE("Constexpr Expected Serialization/Deserialization Output Check: BAR") 
 
 // This struct has a trivial mapping
 struct BAZ : public SERIALIZATION<BAZ>, LEXICOGRAPHICAL_EQUALITY<BAZ> {
-    char c{' '};
+    char c_{' '};
 
     constexpr BAZ() = default;
 
-    constexpr explicit BAZ(char c_) : c{ c_ } {}
+    constexpr explicit BAZ(char c) : c_{ c } {}
 
     static constexpr auto DefineMemberMapping() {
         return std::make_tuple(); // Empty
@@ -137,15 +137,15 @@ TEST_CASE("Objects with empty mapping always serialize as empty") {
 }
 
 struct FOO_BAR : public SERIALIZATION<FOO_BAR>, LEXICOGRAPHICAL_EQUALITY<FOO_BAR> {
-    FOO foo{};
-    BAR bar{};
+    FOO foo_{};
+    BAR bar_{};
 
     FOO_BAR() = default;
 
-    constexpr FOO_BAR(FOO foo_, BAR bar_) : foo{ foo_ }, bar{ bar_ } { }
+    constexpr FOO_BAR(FOO foo, BAR bar) : foo_{ foo }, bar_{ bar } { }
 
     static constexpr auto DefineMemberMapping() {
-        return std::make_tuple(MakeBinding(&FOO_BAR::foo, "foo"), MakeBinding(&FOO_BAR::bar, "bar"));
+        return std::make_tuple(MakeBinding(&FOO_BAR::foo_, "foo"), MakeBinding(&FOO_BAR::bar_, "bar"));
     }
 };
 static_assert(serializable::traits::hasSerializationInterface<FOO_BAR>, "FOO_BAR should evaluate as serializable");
@@ -161,15 +161,15 @@ TEST_CASE("Recursive Serialization of Serializable Objects") {
 }
 
 struct FOO_OPTIONAL_BAR : public SERIALIZATION<FOO_OPTIONAL_BAR>, LEXICOGRAPHICAL_EQUALITY<FOO_OPTIONAL_BAR> {
-    FOO foo{};
-    std::optional<BAR> bar{};
+    FOO foo_{};
+    std::optional<BAR> bar_{};
 
     FOO_OPTIONAL_BAR() = default;
 
-    constexpr FOO_OPTIONAL_BAR(FOO foo_, std::optional<BAR> bar_) : foo{ foo_ }, bar{ bar_ } { }
+    constexpr FOO_OPTIONAL_BAR(FOO foo, std::optional<BAR> bar) : foo_{ foo }, bar_{ bar } { }
 
     static constexpr auto DefineMemberMapping() {
-        return std::make_tuple(MakeBinding(&FOO_OPTIONAL_BAR::foo, "foo"), MakeBinding(&FOO_OPTIONAL_BAR::bar, "bar"));
+        return std::make_tuple(MakeBinding(&FOO_OPTIONAL_BAR::foo_, "foo"), MakeBinding(&FOO_OPTIONAL_BAR::bar_, "bar"));
     }
 };
 static_assert(serializable::traits::hasSerializationInterface<FOO_OPTIONAL_BAR>, "FOO_OPTIONAL_BAR should evaluate as serializable");
@@ -191,15 +191,15 @@ TEST_CASE("Recursive Serialization of Optional Serializable Objects") {
 }
 
 struct FOO_STRING_VIEW : public SERIALIZATION<FOO_STRING_VIEW>, LEXICOGRAPHICAL_EQUALITY<FOO_STRING_VIEW> {
-    FOO foo{};
-    std::string_view text{};
+    FOO foo_{};
+    std::string_view text_{};
 
     FOO_STRING_VIEW() = default;
 
-    constexpr FOO_STRING_VIEW(FOO foo_, std::string_view text_) : foo{ foo_ }, text{ text_ } { }
+    constexpr FOO_STRING_VIEW(FOO foo, std::string_view text) : foo_{ foo }, text_{ text } { }
 
     static constexpr auto DefineMemberMapping() {
-        return std::make_tuple(MakeBinding(&FOO_STRING_VIEW::foo, "foo"), MakeBinding(&FOO_STRING_VIEW::text, "text"));
+        return std::make_tuple(MakeBinding(&FOO_STRING_VIEW::foo_, "foo"), MakeBinding(&FOO_STRING_VIEW::text_, "text"));
     }
 };
 static_assert(serializable::traits::hasSerializationInterface<FOO_STRING_VIEW>, "FOO_STRING should evaluate as serializable");

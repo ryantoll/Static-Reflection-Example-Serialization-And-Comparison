@@ -13,10 +13,10 @@
 
 template<typename M, typename T>
 struct BINDING {
-    M T::* member;
-    std::string_view name;
+    M T::* member_;
+    std::string_view name_;
 
-    constexpr BINDING(M T::* member_, std::string_view name_) : member{ member_ }, name{ name_ } {}
+    constexpr BINDING(M T::* member, std::string_view name) : member_{ member }, name_{ name } {}
 };
 
 template<typename M, typename T>
@@ -30,7 +30,7 @@ template <class T> struct LEXICOGRAPHICAL_EQUALITY {
     // Build lexigraphical equality operator from serialization metadata
     friend constexpr bool operator==(const T& lhs, const T& rhs) {
         auto CompareProperty = [&lhs, &rhs](auto &&...metadata) -> bool {
-            return ((lhs.*metadata.member == rhs.*metadata.member) && ...);
+            return ((lhs.*metadata.member_ == rhs.*metadata.member_) && ...);
             };
         constexpr auto list = T::DefineMemberMapping();
         return std::apply(CompareProperty, list);
@@ -109,15 +109,15 @@ template <class T> std::string serializeFromMetadata(const T& object) {
     // Fill array with key names for lookup
     auto index = 0;
     auto InsertKey = [&result, &lines, &index](auto &&...element) {
-        ((lines[index++].first = element.name), ...);
+        ((lines[index++].first = element.name_), ...);
     };
     std::apply(InsertKey, metadata);
 
     auto AssignProperty = [&lines, &object](auto &&...element) {
         auto AddIfNotNull = [&lines, &object](auto&& element) {
-            auto j = serializeInternal((object.*(element.member)));
+            auto j = serializeInternal((object.*(element.member_)));
             if (!j.empty()) {
-                auto matchKey = [key = element.name.data()](const std::pair<std::string_view, std::string_view>& keyValuePair) {
+                auto matchKey = [key = element.name_.data()](const std::pair<std::string_view, std::string_view>& keyValuePair) {
                     return keyValuePair.first == key;
                 };
                 auto location = lines.begin();
@@ -175,7 +175,7 @@ template <class T> constexpr T DeserializeFromMetadata(std::string_view input) {
     // Fill array with key names for lookup
     auto index = 0;
     auto InsertKey = [&result, &lines, &index](auto &&...element) {
-        ((lines[index++].first = element.name), ...);
+        ((lines[index++].first = element.name_), ...);
     };
     std::apply(InsertKey, list);
 
@@ -211,7 +211,7 @@ template <class T> constexpr T DeserializeFromMetadata(std::string_view input) {
     // Iterate over member variables and assign values assuming each name is present and in same order
     auto counter = 0;
     auto DeserializeElement = [&result, &lines, &counter](auto &&...element) {
-        ((result.*(element.member) = FromStringView<std::decay_t<decltype(result.*(element.member))>>(lines[counter++].second)), ...);
+        ((result.*(element.member_) = FromStringView<std::decay_t<decltype(result.*(element.member_))>>(lines[counter++].second)), ...);
     };
     std::apply(DeserializeElement, list);
 

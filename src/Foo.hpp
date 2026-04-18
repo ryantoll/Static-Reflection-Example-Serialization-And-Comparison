@@ -4,16 +4,16 @@
 #include "Serial_CRTP.hpp"
 
 struct FOO : public SERIALIZATION<FOO>, LEXICOGRAPHICAL_EQUALITY<FOO> {
-    int one{ 0 };
-    std::string_view two;
-    char three{ '\0' };
+    int one_{ 0 };
+    std::string_view two_;
+    char three_{ '\0' };
 
     FOO() = default;
 
-    constexpr FOO(int one_, std::string_view two_, char three_) : one{ one_ }, two{ two_ }, three{ three_ } {}
+    constexpr FOO(int one, std::string_view two, char three) : one_{ one }, two_{ two }, three_{ three } {}
 
     static constexpr auto DefineMemberMapping() {
-        return std::make_tuple(MakeBinding(&FOO::one, "one"), MakeBinding(&FOO::two, "two"), MakeBinding(&FOO::three, "three"));
+        return std::make_tuple(MakeBinding(&FOO::one_, "one"), MakeBinding(&FOO::two_, "two"), MakeBinding(&FOO::three_, "three"));
     }
 };
 
