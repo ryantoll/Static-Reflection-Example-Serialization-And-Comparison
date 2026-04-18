@@ -135,3 +135,81 @@ TEST_CASE("Objects with empty mapping always serialize as empty") {
     REQUIRE(myVar.serialize() == exactMatch.serialize());
     REQUIRE(myVar.serialize() == irrelevantChange.serialize());
 }
+
+struct FOO_BAR : public SERIALIZATION<FOO_BAR>, LEXICOGRAPHICAL_EQUALITY<FOO_BAR> {
+    FOO foo{};
+    BAR bar{};
+
+    FOO_BAR() = default;
+
+    constexpr FOO_BAR(FOO foo_, BAR bar_) : foo{ foo_ }, bar{ bar_ } { }
+
+    static constexpr auto DefineMemberMapping() {
+        return std::make_tuple(MakeBinding(&FOO_BAR::foo, "foo"), MakeBinding(&FOO_BAR::bar, "bar"));
+    }
+};
+static_assert(serializable::traits::hasSerializationInterface<FOO_BAR>, "FOO_BAR should evaluate as serializable");
+
+TEST_CASE("Recursive Serialization of Serializable Objects") {
+    // A serializable object may hold objects that are serializable themselves
+    static constexpr auto myFoo = FOO{ 1, "abc", '-' };
+    static constexpr auto myBar = BAR{ 1, "abc", "Extra notes" };
+    static constexpr auto myVar = FOO_BAR{ myFoo, myBar };
+    static constexpr auto serializationOutput = std::string_view{ "{\n\tfoo : {\n\tone : 1,\n\ttwo : abc,\n\tthree : -\n},\n\tbar : {\n\tone : 1,\n\ttwo : abc\n}\n}" };
+
+    CHECK(myVar.serialize() == serializationOutput.data());
+}
+
+struct FOO_OPTIONAL_BAR : public SERIALIZATION<FOO_OPTIONAL_BAR>, LEXICOGRAPHICAL_EQUALITY<FOO_OPTIONAL_BAR> {
+    FOO foo{};
+    std::optional<BAR> bar{};
+
+    FOO_OPTIONAL_BAR() = default;
+
+    constexpr FOO_OPTIONAL_BAR(FOO foo_, std::optional<BAR> bar_) : foo{ foo_ }, bar{ bar_ } { }
+
+    static constexpr auto DefineMemberMapping() {
+        return std::make_tuple(MakeBinding(&FOO_OPTIONAL_BAR::foo, "foo"), MakeBinding(&FOO_OPTIONAL_BAR::bar, "bar"));
+    }
+};
+static_assert(serializable::traits::hasSerializationInterface<FOO_OPTIONAL_BAR>, "FOO_OPTIONAL_BAR should evaluate as serializable");
+
+TEST_CASE("Recursive Serialization of Optional Serializable Objects") {
+    // Empty optional is entirely omitted: both name and value
+    static constexpr auto myFoo = FOO{ 1, "abc", '-' };
+    static constexpr auto myVar = FOO_OPTIONAL_BAR{ myFoo, std::nullopt };
+    static constexpr auto serializationOutput = std::string_view{ "{\n\tfoo : {\n\tone : 1,\n\ttwo : abc,\n\tthree : -\n}\n}" };
+
+    CHECK(myVar.serialize() == serializationOutput.data());
+
+    // Present optional is serialized the same as a plain value when present
+    static constexpr auto myBar = BAR{ 1, "abc", "Extra notes" };
+    static constexpr auto myVar2 = FOO_BAR{ myFoo, myBar };
+    static constexpr auto serializationOutput2 = std::string_view{ "{\n\tfoo : {\n\tone : 1,\n\ttwo : abc,\n\tthree : -\n},\n\tbar : {\n\tone : 1,\n\ttwo : abc\n}\n}" };
+
+    CHECK(myVar2.serialize() == serializationOutput2.data());
+}
+
+struct FOO_STRING_VIEW : public SERIALIZATION<FOO_STRING_VIEW>, LEXICOGRAPHICAL_EQUALITY<FOO_STRING_VIEW> {
+    FOO foo{};
+    std::string_view text{};
+
+    FOO_STRING_VIEW() = default;
+
+    constexpr FOO_STRING_VIEW(FOO foo_, std::string_view text_) : foo{ foo_ }, text{ text_ } { }
+
+    static constexpr auto DefineMemberMapping() {
+        return std::make_tuple(MakeBinding(&FOO_STRING_VIEW::foo, "foo"), MakeBinding(&FOO_STRING_VIEW::text, "text"));
+    }
+};
+static_assert(serializable::traits::hasSerializationInterface<FOO_STRING_VIEW>, "FOO_STRING should evaluate as serializable");
+
+TEST_CASE("Recursive Serialization of Fundamental Types Mixed with Complex Types") {
+    // Mixed levels of recursion operate seemlessly
+    static constexpr auto myFoo = FOO{ 1, "abc", '-' };
+    static constexpr auto myText = std::string_view{ "Extra notes" };
+    static constexpr auto myVar = FOO_STRING_VIEW{ myFoo, myText };
+    static constexpr auto serializationOutput = std::string_view{ "{\n\tfoo : {\n\tone : 1,\n\ttwo : abc,\n\tthree : -\n},\n\ttext : Extra notes\n}" };
+
+    CHECK(myVar.serialize() == serializationOutput.data());
+}

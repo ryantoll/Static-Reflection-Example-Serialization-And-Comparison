@@ -17,6 +17,6 @@ struct FOO : public SERIALIZATION<FOO>, LEXICOGRAPHICAL_EQUALITY<FOO> {
     }
 };
 
-static_assert(isSerializable<FOO>);
+static_assert(serializable::traits::hasSerializationInterface<FOO>, "FOO should evaluate as serializable");
 
 #endif // !FOO_HPP

@@ -7,11 +7,9 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include "Serial_Type_Traits.hpp"
 #include "Utilities_Limited_Constexpr.hpp"
-
-template <class T>
-inline constexpr bool isSerializable = std::is_invocable_r_v<std::string, decltype(&T::serialize), const T&>
-&& std::is_invocable_r_v<T, decltype(T::deserialize), std::string_view>;
+#include <algorithm>
 
 template<typename M, typename T>
 struct BINDING {
@@ -60,24 +58,79 @@ constexpr std::string_view ToString(const char& c) {
     return { &c, 1 };
 }
 
-template <class T> std::string serializeFromMetadata(const T& object) {
+template <size_t N>
+std::string serializeFromArray(const std::array<std::pair<std::string, std::string>, N>& segmentedInput) {
     auto result = std::string{ "{\n" };
-    auto ConcatenateElement = [&result, &object](auto &&...element) {
-        ((result.push_back('\t'),
-            result.append(element.name),
-            result.append(" : "),
-            result.append(ToString(object.*(element.member))),
-            result.append(",\n")),
-            ...);
-        };
-    static constexpr auto list = T::DefineMemberMapping(); // Create this separately to elide runtime call
-    std::apply(ConcatenateElement, list);
+    auto ConcatenateElement = [&result](const std::pair<std::string, std::string> &pair) {
+        if (pair.second.empty()) {
+            return; // Omit/skip null values
+        }
+        result.push_back('\t');
+        result.append(pair.first);
+        result.append(" : ");
+        result.append(pair.second);
+        result.append(",\n");
+    };
+
+    std::for_each(segmentedInput.begin(), segmentedInput.end(), ConcatenateElement);
 
     auto maybeComma = result.end() - 2;
     if (maybeComma > result.begin()) { result.erase(maybeComma); }
     result.push_back('}');
 
     return result;
+}
+
+template <class T> std::string serializeInternal(const T& object) {
+    using namespace serializable::traits;
+    using TYPE = std::decay_t<T>;
+
+    if constexpr (isOptional<TYPE>) {
+        using ValueType = typename TYPE::value_type;
+        return object.has_value() ? serializeInternal<ValueType>(object.value()) : std::string{};
+    }
+    /// @todo Add cases for several standard containers
+    else if constexpr (std::is_enum_v<TYPE>) {
+        return ToString(static_cast<std::underlying_type_t<TYPE>>(object));
+    }
+    else if constexpr (hasSerializationInterface<TYPE>) {
+        return object.serialize();
+    }
+    else {
+        return std::string{ ToString(object) };
+    }
+}
+
+template <class T> std::string serializeFromMetadata(const T& object) {
+    auto result = std::string{ "{\n" };
+    constexpr auto metadata = T::DefineMemberMapping(); // Create this separately to elide runtime call
+    auto lines = std::array<std::pair<std::string, std::string>, std::tuple_size_v<decltype(metadata)>>{ };
+
+    // Fill array with key names for lookup
+    auto index = 0;
+    auto InsertKey = [&result, &lines, &index](auto &&...element) {
+        ((lines[index++].first = element.name), ...);
+    };
+    std::apply(InsertKey, metadata);
+
+    auto AssignProperty = [&lines, &object](auto &&...element) {
+        auto AddIfNotNull = [&lines, &object](auto&& element) {
+            auto j = serializeInternal((object.*(element.member)));
+            if (!j.empty()) {
+                auto matchKey = [key = element.name.data()](const std::pair<std::string_view, std::string_view>& keyValuePair) {
+                    return keyValuePair.first == key;
+                };
+                auto location = lines.begin();
+                while (location != lines.end() && !matchKey(*location)) { ++location; } // std::find_if() is not constexpr until C++20
+                if (location != lines.end()) { location->second = std::move(j); }
+            }
+        };
+        (AddIfNotNull(element), ...);
+        static_cast<void>(AddIfNotNull);
+    };
+
+    std::apply(AssignProperty, metadata);
+    return serializeFromArray(lines);
 }
 
 ///////////////////////
